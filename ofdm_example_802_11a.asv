@@ -1,0 +1,77 @@
+function ofdm_example_802_11a()
+
+close all; 
+fs = 1e6; 
+Ts = 1/fs; 
+N  = 64; 
+t = 0 : Ts : (N-1)*Ts; 
+
+f1 = fs/10; 
+
+nsc = 53; 
+
+np = 0.0001; 
+% Long Preamble
+LongPreamble = complex(...
+    [ 1,  1, -1, -1,  1,  1, -1,  1, -1,  1,  1,  1,...
+    1,  1,  1, -1, -1,  1,  1, -1,  1, -1,  1,  1,  1,  1, 0,...
+    1, -1, -1,  1,  1, -1,  1, -1,  1, -1, -1, -1, -1, -1,...
+    1,  1, -1, -1,  1, -1,  1, -1,  1,  1,  1,  1].', 0);
+
+
+
+df = fs/N; 
+subc = size(LongPreamble,1)-1; 
+K = (-subc/2:subc/2)';
+y = exp(-j*2*pi*df*K*t);  %53*N matrix
+
+B=repmat(LongPreamble,1,53);
+y1 = zeros(size(y)); 
+
+for i = 1 : nsc
+    y1(i,:) = LongPreamble(i)*y(i,:);
+end
+
+
+%y1 = (y'*B)';
+
+
+y2 = sum(y1);
+
+plot(t,y2,'*-r'); 
+
+r = y2' + np*complex(randn(N,1),randn(N,1)); 
+
+dec = zeros(size(LongPreamble)); 
+
+for i = 1 : nsc
+    dec(i) = y(i,:)*r;
+end
+
+dec = dec/N; 
+
+figure;
+plot(real(LongPreamble),'*-');
+hold on; 
+plot(real(dec,'+-r'); 
+
+
+
+%y = LongPreamble*y(:,
+zeropad = (N-subc)/2; 
+y = [zeros(zeropad,1);y;zeros(zeropad-1,1)]; 
+%y = fftshift(y); 
+Y = ifft(y); 
+
+Y = Y + np*complex(randn(N,1),randn(N,1)); 
+
+rx = fft(Y); 
+
+F = (-N/2: (N-1)/2)/N*fs; 
+plot(F,fftshift(abs(Y)),'*-');
+hold on;
+plot(F,real(Y),'+r-'); 
+grid on; 
+plot(F,real(rx),'dk-'); 
+plot(F,imag(rx),'oc-'); 
+
